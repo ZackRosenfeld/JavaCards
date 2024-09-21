@@ -91,4 +91,33 @@ public class Stack {
             recievingStack.stackCards.add(card);
         }
     }
+
+    
+     /*
+     * Sorts all cards in a stack in order of runValue, from least to greatest
+     */
+    public void sortStack() {
+        List<Card> sortedStack = new ArrayList<>();
+        int stackSize = this.stackCards.size();
+        
+        for (int i = 0; i < stackSize; i++) {
+            int minValue = this.stackCards.get(0).runValue;
+            Card minCard = this.stackCards.get(0);
+            
+            // Find the minimum value card in the current state of the stack
+            for (Card card : this.stackCards) {
+                if (card.runValue <= minValue) {
+                    minValue = card.runValue;
+                    minCard = card;
+                }
+            }
+            
+            // Add the minimum value card to the sorted stack and remove it from the original stack
+            sortedStack.add(minCard);
+            this.stackCards.remove(minCard);
+        }
+    
+        // Assign the sorted stack back to the original stack
+        this.stackCards = sortedStack;
+    }
 }
