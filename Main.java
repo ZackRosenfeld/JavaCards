@@ -9,13 +9,13 @@ public class Main {
         Stack testHand = new Stack("testHand");
         Deck testDeck = new Deck("testDeck");
 
-        testDeck.specificDeal(new String[]{"six of clubs", "six of hearts", "eight of spades", "ace of diamonds"}, testHand);
+        //testDeck.specificDeal(new String[]{"six of clubs", "six of hearts", "eight of spades", "ace of diamonds"}, testHand);
 
-        //dealFullHand(testDeck, testHand);
+        dealFullHand(testDeck, testHand);
 
         System.out.println(testHand.stackCards);
 
-        System.out.println(findAvgScoreOfFlip(testDeck, testHand));
+        System.out.println(findBestDiscard(testDeck, testHand));
 
     }
 
@@ -108,6 +108,14 @@ public class Main {
 
         for (Card flip : numCards) {
             totalAverageScore += scoreFlipNumOnly(flip, hand) * weightedNums[flip.runValue - 1] / deck.stackCards.size();
+        }
+
+        int[] weightedSuits = createWeightedSuitList(deck);
+        
+        Card[] suitCards = {new Card("ace", 'h'), new Card("two", 'd'), new Card("three", 's'), new Card("four", 'c')};
+
+        for (Card flip : suitCards) {
+            totalAverageScore += scoreFlipSuitOnly(flip, hand) * weightedSuits[flip.runValue - 1] / deck.stackCards.size();
         }
 
         return totalAverageScore;
@@ -224,6 +232,23 @@ public class Main {
 
     }
 
+    public static double scoreFlipSuitOnly(Card flip, Stack hand) {
+        double flipScore = 0;
+        
+        for (Card card : hand.stackCards) {
+            if ((card.suit == flip.suit) && card.faceVal.equals("jack")) {
+                flipScore += 1;
+            }
+        }
+
+        if (findCommonSuit(hand) && hand.stackCards.get(0).suit == flip.suit) {
+            flipScore += 1;
+            //System.out.println("I found a flush 5");
+        }
+
+        return flipScore;
+    }
+
 
     /*
      * Accepts a hand of 6 cards and the deck that those cards were dealt from
@@ -233,6 +258,9 @@ public class Main {
     public static List<Card> findBestDiscard(Deck deck, Stack hand) {
         List<Double> discardScores = new ArrayList<>();
         List<Stack> discards = new ArrayList<>();
+
+        hand.sortStack();
+
         for (int discard1 = 0; discard1 < hand.stackCards.size(); discard1++) {
             for (int discard2 = discard1 + 1; discard2 < hand.stackCards.size(); discard2++) {
                 Stack discard = new Stack("tempDiscardStack");
@@ -247,7 +275,16 @@ public class Main {
                 discards.add(discard);
                 
                 hand.stackCards.addAll(discard.stackCards);
+
+                hand.sortStack();
             }
+        }
+
+        int index = 0;
+        for (Stack discard : discards) {
+            System.out.println(discard.stackCards);
+            System.out.println(discardScores.get(index));
+            index++;
         }
 
         int maxIndex = 0;
