@@ -9,13 +9,19 @@ public class Main {
         Stack testHand = new Stack("testHand");
         Deck testDeck = new Deck("testDeck");
 
+        //testDeck.randDeal(2, testHand);
+
+        //System.out.println(testDeck.stackCards.size());
+
+        //System.out.println(averageScoreCrib(testDeck, testHand, false));
+
         //testDeck.specificDeal(new String[]{"six of clubs", "six of hearts", "eight of spades", "ace of diamonds"}, testHand);
 
         dealFullHand(testDeck, testHand);
 
         System.out.println(testHand.stackCards);
 
-        System.out.println(findBestDiscard(testDeck, testHand));
+        System.out.println(findBestDiscard(testDeck, testHand, true));
 
     }
 
@@ -89,6 +95,7 @@ public class Main {
                 }
             }
         }
+        
         // determining runs of 3
         // only scoring them if there is no run of four present
         if (!runOfFourPresent) {
@@ -98,7 +105,11 @@ public class Main {
         return totalScore;
     }
     
-
+    /*
+     * Takes a stack and the deck they were drawn from
+     * Returns the average score of a flip as a double
+     * used for deciding what to discard
+     */
     public static double findAvgScoreOfFlip(Deck deck, Stack hand) {
         double totalAverageScore = 0;
         
@@ -121,7 +132,9 @@ public class Main {
         return totalAverageScore;
     }
 
-
+    /*
+     * 
+     */
     public static double scoreFlipNumOnly(Card flip, Stack hand) {
         double flipScore = 0;
         boolean runOfFourPresent = findRunOfFour(hand);
@@ -232,6 +245,60 @@ public class Main {
 
     }
 
+    
+    public static double averageScoreCrib(Deck deck, Stack discard, boolean playersCrib) {
+        double averageScore = 0;
+
+        List<Card> deckCopy = new ArrayList<>(deck.stackCards);
+
+
+
+        for (Card discard1 : deckCopy) {
+            for (Card discard2 : deckCopy) {
+                if (deckCopy.indexOf(discard1) < deckCopy.indexOf(discard2)) {
+                    
+                    discard.sortStack();
+                    deck.sortStack();
+                    discard.stackCards.add(discard1);
+                    discard.stackCards.add(discard2);
+
+                    //System.out.println(discard.stackCards);
+
+                    deck.stackCards.remove(discard1);
+                    deck.stackCards.remove(discard2);
+
+                    //System.out.println(deck.stackCards.size());
+
+                    double cribScore = scoreFourCards(discard) + findAvgScoreOfFlip(deck, discard);
+
+                    //System.out.println(scoreFourCards(discard));
+                    //System.out.println(findAvgScoreOfFlip(deck, discard));
+
+                    averageScore += cribScore / nCr(deck.stackCards.size(), 2);
+
+                    deck.stackCards.add(discard1);
+                    deck.stackCards.add(discard2);
+
+                    discard.stackCards.remove(discard1);
+                    discard.stackCards.remove(discard2);
+                }
+            }
+        }
+
+        if (!playersCrib) {
+            averageScore = -averageScore;
+        }
+
+        return averageScore;
+    }
+
+
+    /*
+     * Takes a card and a stack
+     * The stack should contain 4 cards
+     * Returns the score the flip contributes to hand,
+     * Only accounting for flip
+     */
     public static double scoreFlipSuitOnly(Card flip, Stack hand) {
         double flipScore = 0;
         
@@ -255,7 +322,7 @@ public class Main {
      * Returns the 2 best cards to discard in order to maximize average score
      * Currently does not account for crib
      */
-    public static List<Card> findBestDiscard(Deck deck, Stack hand) {
+    public static List<Card> findBestDiscard(Deck deck, Stack hand, boolean playersCrib) {
         List<Double> discardScores = new ArrayList<>();
         List<Stack> discards = new ArrayList<>();
 
@@ -268,8 +335,8 @@ public class Main {
                 discard.stackCards.add(hand.stackCards.get(discard1));
                 discard.stackCards.add(hand.stackCards.get(discard2));
                 hand.stackCards.removeAll(discard.stackCards);
-
-                double handScore = scoreFourCards(hand) + findAvgScoreOfFlip(deck, hand);
+                
+                double handScore = scoreFourCards(hand) + findAvgScoreOfFlip(deck, hand) + averageScoreCrib(deck, discard, playersCrib);
 
                 discardScores.add(handScore);
                 discards.add(discard);
@@ -370,7 +437,9 @@ public class Main {
         return runOf3;
     }
 
-
+    // takes a stack which should contain three cards
+    // returns true if a run of three is present
+    // otherwise returns false
     public static boolean findRunOfThree3Cards(Stack threeCardHand) {
         threeCardHand.sortStack();
         if ((threeCardHand.stackCards.get(0).runValue == (threeCardHand.stackCards.get(1).runValue - 1)) && (threeCardHand.stackCards.get(0).runValue == (threeCardHand.stackCards.get(2).runValue - 2))) {
@@ -469,7 +538,11 @@ public class Main {
         return weightedNums;
     }
 
-
+    /*
+     * takes a deck
+     * returns the a list containing the number of cards of each suit in this order:
+     * {hearts, diamonds, spades, clubs}
+     */
     public static int[] createWeightedSuitList(Deck deck) {
         int[] weightedSuits = {0, 0, 0, 0};
 
@@ -492,4 +565,25 @@ public class Main {
 
         return weightedSuits;
     }
+
+
+    public static long nCr(int n, int r) {
+        if (r > n) {
+            return 0; // nCr is 0 if r > n
+        }
+        if (r == 0 || r == n) {
+            return 1; // nC0 = nCn = 1
+        }
+
+        // Since nCr = nC(n-r), use the smaller of r and (n - r) to optimize
+        r = Math.min(r, n - r);
+
+        long result = 1;
+        for (int i = 0; i < r; i++) {
+            result = result * (n - i) / (i + 1);
+        }
+        return result;
+    }
+
+
 }
